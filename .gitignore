@@ -1,0 +1,7 @@
+dataset/
+output/*.parquet
+output/*.npy
+output/*.pkl
+__pycache__/
+.claude/
+.DS_Store

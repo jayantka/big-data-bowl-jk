@@ -1,0 +1,72 @@
+{
+  "model": [
+    {
+      "driver": "Entry speed",
+      "coef": 0.219,
+      "lo": 0.15,
+      "hi": 0.285
+    },
+    {
+      "driver": "Braking force",
+      "coef": -0.001,
+      "lo": -0.104,
+      "hi": 0.093
+    },
+    {
+      "driver": "Cornering (lateral) g",
+      "coef": -0.088,
+      "lo": -0.132,
+      "hi": -0.044
+    },
+    {
+      "driver": "Exit acceleration",
+      "coef": -0.163,
+      "lo": -0.222,
+      "hi": -0.106
+    }
+  ],
+  "model_same_defender": [
+    {
+      "driver": "Entry speed",
+      "coef": 0.385,
+      "lo": 0.291,
+      "hi": 0.478
+    },
+    {
+      "driver": "Braking force",
+      "coef": -0.163,
+      "lo": -0.281,
+      "hi": -0.055
+    },
+    {
+      "driver": "Cornering (lateral) g",
+      "coef": -0.036,
+      "lo": -0.096,
+      "hi": 0.028
+    },
+    {
+      "driver": "Exit acceleration",
+      "coef": -0.174,
+      "lo": -0.261,
+      "hi": -0.099
+    }
+  ],
+  "speed_retained_vs_sep_gain": {
+    "Sweeper (slant/post)": -0.13,
+    "90-degree (in/out/dig)": -0.19,
+    "Hairpin (curl/comeback)": -0.0
+  },
+  "envelope_reliability": 0.84,
+  "wr_envelope_vs_separation": -0.09,
+  "wr_envelope_vs_target_rate": 0.05,
+  "reliability": {
+    "v_entry": 0.59,
+    "entry_speed_oe": 0.42,
+    "peak_brake_g": 0.38,
+    "peak_lat_g": 0.39,
+    "exit_accel": 0.17,
+    "sep_gain": 0.24
+  },
+  "n_routes": 38927,
+  "n_corners": 5470
+}
