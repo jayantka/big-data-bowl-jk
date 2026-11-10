@@ -95,7 +95,7 @@ const es = m["Entry speed"], bf = m["Braking force"];
 $("tiles").innerHTML = [
   [`+${es.coef.toFixed(2)} yd`, `Receivers entering a turn about 1 yard/second faster tended to gain ${es.coef.toFixed(2)} more yards of space.`, `95% CI ${es.lo.toFixed(2)} to ${es.hi.toFixed(2)}, per +1 standard deviation of speed before the turn`],
   [`${Math.abs(bf.coef).toFixed(2)} yd`, `link between harder braking and extra space (95% CI ${bf.lo.toFixed(2)} to ${bf.hi.toFixed(2)}): none measurable`],
-  [`r = ${F.envelope_reliability.toFixed(2)}`, `how stable a receiver's movement ability is between Weeks 1–4 and Weeks 5–8 (${F.envelope_reliability_n} players)`],
+  [`r = ${F.envelope_reliability.toFixed(2)}`, `Players' movement patterns were fairly consistent across the first and second halves of the dataset.`, `Weeks 1–4 vs Weeks 5–8, ${F.envelope_reliability_n} players (1.00 would be identical)`],
   [`${F.n_corners.toLocaleString()}`, `clean route breaks analysed, from ${F.n_routes.toLocaleString()} routes`],
 ].map(([b, s, fine]) => `<div class="tile"><b>${b}</b><span>${s}</span>${fine ? `<small>${fine}</small>` : ""}</div>`).join("");
 $("takeaway").innerHTML = "<b>Speed going into a turn is linked to more space from the defender than speed kept through it.</b> One possible explanation is that defenders must prepare for the receiver to continue running downfield. Once speed before the turn is accounted for, braking harder shows no link with extra space, and turning harder and speeding up faster after the turn are linked to slightly less space in this model. This is observational, not proof of cause.";
