@@ -7,76 +7,139 @@
 <script src="plotly.min.js"></script>
 <script src="data.js"></script>
 <style>
-  :root { --bg:#0f1115; --panel:#171a21; --line:#2a2e37; --fg:#e8eaed; --muted:#8a8f98; --a:#00d2be; --b:#ff8700; --bad:#dc0000; }
+  :root { --bg:#0f1115; --panel:#171a21; --line:#2a2e37; --fg:#e8eaed; --muted:#8a8f98; --a:#00d2be; --b:#ff8700; --c:#a78bfa; --bad:#dc0000; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-  main { max-width:1180px; margin:0 auto; padding:24px 16px 48px; }
-  h1 { margin:0; font-size:28px; letter-spacing:.5px; }
-  h2 { font-size:16px; margin:0 0 8px; }
-  .sub { color:var(--muted); margin:4px 0 20px; }
-  .eyebrow { color:var(--a); font-size:12px; letter-spacing:1.5px; margin:0 0 6px; }
+  main { max-width:1180px; margin:0 auto; padding:0 16px 40px; }
+
+  /* hero: faint yard lines fading into the page */
+  .hero { position:relative; margin:0 -16px 20px; padding:34px 16px 20px; border-bottom:1px solid var(--line);
+          background:
+            linear-gradient(180deg, rgba(15,17,21,0) 30%, var(--bg) 100%),
+            repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 2px, transparent 2px 80px),
+            repeating-linear-gradient(90deg, rgba(255,255,255,.028) 0 1px, transparent 1px 16px),
+            radial-gradient(90% 160% at 0% 0%, rgba(0,210,190,.13), transparent 60%),
+            radial-gradient(70% 140% at 100% 0%, rgba(255,135,0,.08), transparent 60%); }
+  h1 { margin:0; font-size:clamp(30px, 4.6vw, 46px); font-weight:800; line-height:1.1; letter-spacing:-.5px; }
+  .stripe { height:5px; width:150px; margin:14px 0 12px 3px; border-radius:2px; transform:skewX(-24deg);
+            background:linear-gradient(90deg, var(--a), var(--b)); }
+  .sub { color:var(--muted); margin:0; font-size:16px; max-width:760px; }
+  .eyebrow { color:var(--a); font-size:12px; letter-spacing:1.5px; margin:0 0 8px; }
+
+  h2 { font-size:18px; margin:0 0 8px; }
+  h2::before { content:""; display:inline-block; width:4px; height:16px; margin-right:9px; border-radius:2px; vertical-align:-2px;
+               background:linear-gradient(180deg, var(--a), var(--b)); }
+  .kicker { color:var(--a); font-size:11px; font-weight:600; letter-spacing:1.4px; text-transform:uppercase; margin:0 0 4px; }
   .lead { color:var(--muted); font-size:13px; margin:-2px 0 8px; }
+
+  /* stat cards */
   .tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:12px; margin-bottom:12px; }
-  .tile, .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
-  .tile b { display:block; font-size:26px; font-variant-numeric:tabular-nums; }
+  .tile { --tc:var(--a); background:var(--panel); border:1px solid var(--line); border-top:3px solid var(--tc); border-radius:12px;
+          padding:14px 16px 16px; transition:transform .18s ease, box-shadow .18s ease; }
+  .tile:nth-child(2) { --tc:var(--b); } .tile:nth-child(3) { --tc:var(--c); } .tile:nth-child(4) { --tc:var(--muted); }
+  .tile:hover { transform:translateY(-3px); box-shadow:0 14px 30px -16px var(--tc), 0 0 0 1px var(--tc); }
+  .tile .k { color:var(--tc); font-size:11px; font-weight:600; letter-spacing:1.3px; text-transform:uppercase; }
+  .tile b { display:block; font-size:36px; font-weight:800; line-height:1.2; margin-bottom:4px; font-variant-numeric:tabular-nums; }
   .tile span { color:var(--muted); font-size:13px; }
   .tile small { display:block; color:var(--muted); font-size:11px; opacity:.8; margin-top:6px; }
-  .takeaway { border-left:3px solid var(--a); padding:8px 14px; margin:0 0 20px; background:var(--panel); border-radius:0 8px 8px 0; }
-  .controls { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
+  .takeaway { border-left:3px solid var(--a); padding:10px 14px; margin:0 0 20px; background:var(--panel); border-radius:0 10px 10px 0; }
+
+  /* cards with a subtle gradient border */
+  .panel { border:1px solid transparent; border-radius:14px; padding:16px 18px;
+           background:linear-gradient(var(--panel), var(--panel)) padding-box,
+                      linear-gradient(135deg, rgba(0,210,190,.5), var(--line) 30%, var(--line) 70%, rgba(255,135,0,.45)) border-box; }
+
+  /* selectors stay visible while scrolling */
+  .stickybar { position:sticky; top:0; z-index:20; margin:0 -16px 12px; padding:10px 16px 12px; border-bottom:1px solid var(--line);
+               background:rgba(15,17,21,.78); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  @media (max-width:700px) { .stickybar { position:static; } }
+  .controls { display:flex; flex-wrap:wrap; gap:12px; }
   .controls label { display:flex; flex-direction:column; font-size:12px; color:var(--muted); gap:4px; flex:1 1 200px; }
   select { background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:15px; }
   .la select { border-color:var(--a); } .lb select { border-color:var(--b); }
+
+  /* route-break guide */
+  .routeguide { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 10px; }
+  .rg { display:flex; align-items:center; gap:10px; flex:1 1 220px; padding:8px 12px; border:1px solid var(--line); border-radius:10px;
+        background:var(--panel); color:var(--muted); font-size:13px; transition:border-color .15s, color .15s; }
+  .rg svg { flex:none; width:46px; height:40px; }
+  .rg path { fill:none; stroke:currentColor; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+  .rg circle { fill:currentColor; }
+  .rg.on { border-color:var(--a); color:var(--fg); }
+  .rg.on path { stroke:var(--a); } .rg.on circle { fill:var(--a); }
+
   .grid { display:grid; grid-template-columns:1.25fr 1fr; gap:12px; margin-bottom:12px; }
   @media (max-width:860px) { .grid { grid-template-columns:1fr; } }
   .plot { width:100%; height:430px; }
+
   table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
-  th, td { padding:7px 8px; border-bottom:1px solid var(--line); text-align:right; }
+  th, td { padding:8px 10px; border-bottom:1px solid var(--line); text-align:right; }
   th:first-child, td:first-child { text-align:left; }
   th { color:var(--muted); font-weight:500; font-size:12px; }
-  .bar { display:inline-block; height:8px; border-radius:4px; vertical-align:middle; margin-left:8px; }
+  #sheet tr:nth-child(even) td { background:rgba(255,255,255,.028); }
+  #sheet tr:hover td { background:rgba(0,210,190,.08); }
+  .bar { display:inline-block; height:10px; border-radius:5px; vertical-align:middle; margin-left:8px; }
   .pct { color:var(--muted); font-size:12px; display:inline-block; width:74px; text-align:left; }
   .note { color:var(--muted); font-size:13px; margin-top:8px; }
   .warn { color:var(--b); font-size:13px; }
   .scroll { overflow-x:auto; }
+  footer { color:var(--muted); font-size:12px; text-align:center; margin-top:22px; padding-top:14px; border-top:1px solid var(--line); }
+  footer a { color:var(--a); text-decoration:none; } footer a:hover { text-decoration:underline; }
+  @media (prefers-reduced-motion: reduce) { .tile, .rg { transition:none; } .tile:hover { transform:none; } }
 </style>
 </head>
 <body>
 <main>
-  <p class="eyebrow">ROUTE TELEMETRY · 2021 NFL DATA</p>
-  <h1>What Makes NFL Receivers Get Open?</h1>
-  <p class="sub">We analyzed 5,470 route breaks to see how players use speed and changes of direction to create space from defenders.</p>
+  <header class="hero">
+    <p class="eyebrow">ROUTE TELEMETRY · 2021 NFL DATA</p>
+    <h1>What Makes NFL Receivers Get Open?</h1>
+    <div class="stripe"></div>
+    <p class="sub">We analyzed 5,470 route breaks to see how players use speed and changes of direction to create space from defenders.</p>
+  </header>
 
   <div class="tiles" id="tiles"></div>
   <p class="takeaway" id="takeaway"></p>
 
   <p class="note" style="margin:0 0 12px">Just like racing teams compare how two cars take the same turn, we compare how two NFL receivers run similar routes.</p>
 
-  <div class="controls">
-    <label class="la">Receiver A<select id="selA"></select></label>
-    <label class="lb">Receiver B<select id="selB"></select></label>
-    <label>Type of route break<select id="selT"></select></label>
+  <div class="stickybar">
+    <div class="controls">
+      <label class="la">Receiver A<select id="selA"></select></label>
+      <label class="lb">Receiver B<select id="selB"></select></label>
+      <label>Type of route break<select id="selT"></select></label>
+    </div>
+  </div>
+
+  <div class="routeguide" aria-label="Route break shapes">
+    <div class="rg"><svg viewBox="0 0 46 40" aria-hidden="true"><circle cx="12" cy="36" r="3"/><path d="M12 36 L12 20 L34 5"/><path d="M26 5 L34 5 L32 13"/></svg><span>Gentle turn (slants, posts)</span></div>
+    <div class="rg"><svg viewBox="0 0 46 40" aria-hidden="true"><circle cx="10" cy="36" r="3"/><path d="M10 36 L10 12 L38 12"/><path d="M32 6 L38 12 L32 18"/></svg><span>Square turn (ins, outs, digs)</span></div>
+    <div class="rg"><svg viewBox="0 0 46 40" aria-hidden="true"><circle cx="14" cy="36" r="3"/><path d="M14 36 L14 6 L30 24"/><path d="M30 15 L30 24 L21 23"/></svg><span>Sharp turn back (curls, comebacks)</span></div>
   </div>
 
   <p class="note" style="margin:0 0 12px">Types of route break are based on the angle of the turn (35–70°, 70–115°, 115°+), not on charted route names. The route names in brackets are what each type typically contains.</p>
 
   <div class="grid">
-    <div class="panel"><h2>Compare Two Receivers</h2><p class="lead">See how two players' speeds change as they approach, make and leave a similar turn.</p><div id="ghost" class="plot"></div><div id="ghostNote" class="warn"></div></div>
-    <div class="panel"><h2>How Players Move and Change Direction</h2><p class="lead">See how hard a receiver slows down, speeds up and moves sideways when making a turn.</p><div id="gg" class="plot"></div><p class="note">Each dot represents a moment of movement. The larger the outline, the wider the range of movements the player demonstrated. A larger outline does not automatically mean a better route runner: among wide receivers it was not linked to getting open.</p></div>
+    <div class="panel"><p class="kicker">01 Compare</p><h2>Compare Two Receivers</h2><p class="lead">See how two players' speeds change as they approach, make and leave a similar turn.</p><div id="ghost" class="plot"></div><div id="ghostNote" class="warn"></div></div>
+    <div class="panel"><p class="kicker">02 Movement</p><h2>How Players Move and Change Direction</h2><p class="lead">See how hard a receiver slows down, speeds up and moves sideways when making a turn.</p><div id="gg" class="plot"></div><p class="note">Each dot represents a moment of movement. The larger the outline, the wider the range of movements the player demonstrated. A larger outline does not automatically mean a better route runner: among wide receivers it was not linked to getting open.</p></div>
   </div>
 
   <div class="panel scroll" style="margin-bottom:12px">
+    <p class="kicker">03 The numbers</p>
     <h2>Player Numbers Side by Side</h2>
     <table id="sheet"></table>
     <p class="note">Bars show percentile among players at the same position with at least 100 routes. Turn numbers use only clean turns: at least 4.5 yd/s before the turn, at least 1 s after the snap, nearest defender 0.7–8 yd away.</p>
   </div>
 
   <div class="panel">
+    <p class="kicker">04 What is linked to space</p>
     <h2>Extra Space Created From the Defender</h2>
     <p class="lead">Which movement traits are most closely linked to a receiver getting open? Of the movement traits we measured, speed before the turn showed the clearest positive relationship with getting open.</p>
     <p class="note" style="margin:0 0 4px">Teal bar: linked to more space. Red bars: linked to less space. Grey: no clear link. Bars show extra space created from the defender for a one-step (one standard deviation) increase in each trait.</p>
     <div id="model" class="plot" style="height:300px"></div>
     <p class="note" id="modelNote"></p>
   </div>
+
+  <footer>Data: NFL Next Gen Stats tracking, 2021 Weeks 1-8 · Observational analysis, not proof of cause · <a href="https://github.com/jayantka/big-data-bowl-jk">Code and method on GitHub</a></footer>
 </main>
 
 <script>
@@ -92,12 +155,20 @@ const fmt = (v, d=2) => v == null ? "–" : v.toFixed(d);
 // headline tiles
 const m = Object.fromEntries(F.model.map(r => [r.driver, r]));
 const es = m["Entry speed"], bf = m["Braking force"];
-$("tiles").innerHTML = [
-  [`+${es.coef.toFixed(2)} yd`, `Receivers entering a turn about 1 yard/second faster tended to gain ${es.coef.toFixed(2)} more yards of space.`, `95% CI ${es.lo.toFixed(2)} to ${es.hi.toFixed(2)}, per +1 standard deviation of speed before the turn`],
-  [`${Math.abs(bf.coef).toFixed(2)} yd`, `link between harder braking and extra space (95% CI ${bf.lo.toFixed(2)} to ${bf.hi.toFixed(2)}): none measurable`],
-  [`r = ${F.envelope_reliability.toFixed(2)}`, `Players' movement patterns were fairly consistent across the first and second halves of the dataset.`, `Weeks 1–4 vs Weeks 5–8, ${F.envelope_reliability_n} players (1.00 would be identical)`],
-  [`${F.n_corners.toLocaleString()}`, `clean route breaks analysed, from ${F.n_routes.toLocaleString()} routes`],
-].map(([b, s, fine]) => `<div class="tile"><b>${b}</b><span>${s}</span>${fine ? `<small>${fine}</small>` : ""}</div>`).join("");
+const TILES = [
+  { k:"Speed effect", v:es.coef, f:x => `+${x.toFixed(2)} yd`,
+    s:`Receivers entering a turn about 1 yard/second faster tended to gain ${es.coef.toFixed(2)} more yards of space.`,
+    fine:`95% CI ${es.lo.toFixed(2)} to ${es.hi.toFixed(2)}, per +1 standard deviation of speed before the turn` },
+  { k:"Braking effect", v:Math.abs(bf.coef), f:x => `${x.toFixed(2)} yd`,
+    s:`link between harder braking and extra space (95% CI ${bf.lo.toFixed(2)} to ${bf.hi.toFixed(2)}): none measurable` },
+  { k:"Consistency", v:F.envelope_reliability, f:x => `r = ${x.toFixed(2)}`,
+    s:`Players' movement patterns were fairly consistent across the first and second halves of the dataset.`,
+    fine:`Weeks 1–4 vs Weeks 5–8, ${F.envelope_reliability_n} players (1.00 would be identical)` },
+  { k:"Sample size", v:F.n_corners, f:x => `${Math.round(x).toLocaleString()}`,
+    s:`clean route breaks analysed, from ${F.n_routes.toLocaleString()} routes` },
+];
+$("tiles").innerHTML = TILES.map(t => `<div class="tile"><div class="k">${t.k}</div><b>${t.f(t.v)}</b><span>${t.s}</span>${t.fine ? `<small>${t.fine}</small>` : ""}</div>`).join("");
+
 $("takeaway").innerHTML = "<b>Speed going into a turn is linked to more space from the defender than speed kept through it.</b> One possible explanation is that defenders must prepare for the receiver to continue running downfield. Once speed before the turn is accounted for, braking harder shows no link with extra space, and turning harder and speeding up faster after the turn are linked to slightly less space in this model. This is observational, not proof of cause.";
 
 // selectors
@@ -159,7 +230,7 @@ const ROWS = [
 function sheet(a, b) {
   const cell = (p, k, pk, c) => {
     const pct = pk ? p.stats[pk] : null;
-    const bar = pct == null ? "" : `<span class="bar" style="width:${Math.max(2, pct * 0.6)}px;background:${c}"></span> <span class="pct">${pct.toFixed(0)}th pct</span>`;
+    const bar = pct == null ? "" : `<span class="bar" style="width:${Math.max(3, pct * 0.75)}px;background:${c}"></span> <span class="pct">${pct.toFixed(0)}th pct</span>`;
     return `<td>${fmt(p.stats[k])}${bar}</td>`;
   };
   $("sheet").innerHTML =
@@ -182,6 +253,7 @@ function model() {
 function render() {
   const a = P[$("selA").value], b = P[$("selB").value], t = $("selT").value;
   ghost(a, b, t); gg(a, b); sheet(a, b);
+  document.querySelectorAll(".rg").forEach((el, i) => el.classList.toggle("on", DATA.types[i] === t));
 }
 ["selA", "selB", "selT"].forEach(id => $(id).addEventListener("change", render));
 model(); render();
