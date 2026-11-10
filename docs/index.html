@@ -51,6 +51,8 @@
     <label>Corner type<select id="selT"></select></label>
   </div>
 
+  <p class="note" style="margin:0 0 12px">Corner types are geometry-based route families defined by turn angle (35–70°, 70–115°, 115°+), not charted route names. The route names in brackets are what each family typically contains.</p>
+
   <div class="grid">
     <div class="panel"><h2>Ghost-car speed trace</h2><div id="ghost" class="plot"></div><div id="ghostNote" class="warn"></div></div>
     <div class="panel"><h2>G-G diagram (performance envelope)</h2><div id="gg" class="plot"></div></div>
@@ -63,7 +65,7 @@
   </div>
 
   <div class="panel">
-    <h2>What buys separation at the break?</h2>
+    <h2>What is associated with separation at the break?</h2>
     <div id="model" class="plot" style="height:300px"></div>
     <p class="note" id="modelNote"></p>
   </div>
@@ -83,12 +85,12 @@ const fmt = (v, d=2) => v == null ? "–" : v.toFixed(d);
 const m = Object.fromEntries(F.model.map(r => [r.driver, r]));
 const es = m["Entry speed"], bf = m["Braking force"];
 $("tiles").innerHTML = [
-  [`+${es.coef.toFixed(2)} yd`, `separation gained through the break per +1 SD of entry speed (95% CI ${es.lo.toFixed(2)} to ${es.hi.toFixed(2)})`],
-  [`${Math.abs(bf.coef).toFixed(2)} yd`, `effect of braking force (95% CI ${bf.lo.toFixed(2)} to ${bf.hi.toFixed(2)}): no measurable payoff`],
-  [`r = ${F.envelope_reliability.toFixed(2)}`, `repeatability of a receiver's G-G envelope between two halves of his frames`],
+  [`+${es.coef.toFixed(2)} yd`, `more separation through the break associated with +1 SD of entry speed (95% CI ${es.lo.toFixed(2)} to ${es.hi.toFixed(2)})`],
+  [`${Math.abs(bf.coef).toFixed(2)} yd`, `association with braking force (95% CI ${bf.lo.toFixed(2)} to ${bf.hi.toFixed(2)}): none measurable`],
+  [`r = ${F.envelope_reliability.toFixed(2)}`, `stability of a receiver's G-G envelope between Weeks 1–4 and Weeks 5–8 (${F.envelope_reliability_n} players)`],
   [`${F.n_corners.toLocaleString()}`, `clean corners analysed, from ${F.n_routes.toLocaleString()} routes`],
 ].map(([b, s]) => `<div class="tile"><b>${b}</b><span>${s}</span></div>`).join("");
-$("takeaway").innerHTML = "<b>Separation is won on the straight, not in the corner.</b> Receivers who arrive at the break faster leave it more open. Harder braking, higher cornering g and quicker exit acceleration do not add separation once entry speed is accounted for.";
+$("takeaway").innerHTML = "<b>Separation is won on the straight, not in the corner.</b> Faster entry speed into the break is associated with more separation gained through it. Harder braking, higher cornering g and quicker exit acceleration show no positive association once entry speed is accounted for. This is observational, not proof of cause.";
 
 // selectors
 const ids = Object.keys(P).sort((a, b) => P[a].name.localeCompare(P[b].name));
@@ -161,8 +163,8 @@ function model() {
   Plotly.newPlot("model", [{ type:"bar", orientation:"h", y:r.map(d => d.driver), x:r.map(d => d.coef),
     marker:{ color:r.map(d => d.lo > 0 ? CA : d.hi < 0 ? "#dc0000" : MUTED) },
     error_x:{ type:"data", symmetric:false, array:r.map(d => d.hi - d.coef), arrayminus:r.map(d => d.coef - d.lo), color:FG, thickness:1.2 } }],
-    { ...base, margin:{l:170, r:15, t:10, b:50}, xaxis:{ ...axis, title:"Yards of separation gained through the break per +1 SD (95% CI)" }, yaxis:{ ...axis } }, cfg);
-  $("modelNote").textContent = "Linear model on " + F.n_corners.toLocaleString() + " clean corners, controlling for starting separation, turn angle, depth and man/zone coverage. Intervals resample players. Measured against one fixed defender (nearest at entry) the entry-speed effect is +" + F.model_same_defender[0].coef.toFixed(2) + " yd. Separation is measured from 0.5 s before to 0.5 s after the apex; tracking ends shortly after the throw, so catch-point separation is not observed.";
+    { ...base, margin:{l:170, r:15, t:10, b:50}, xaxis:{ ...axis, title:"Association with separation gained through the break (yd per +1 SD, 95% CI)" }, yaxis:{ ...axis } }, cfg);
+  $("modelNote").textContent = "Linear model on " + F.n_corners.toLocaleString() + " clean corners, controlling for starting separation, turn angle, depth and man/zone coverage. Intervals resample players. Measured against one fixed defender (nearest at entry) the entry-speed association is +" + F.model_same_defender[0].coef.toFixed(2) + " yd. Separation is measured from 0.5 s before to 0.5 s after the apex; tracking ends shortly after the throw, so catch-point separation is not observed.";
 }
 
 function render() {

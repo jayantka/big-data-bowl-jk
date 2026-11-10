@@ -177,8 +177,8 @@ def fig_separation(model, q):
     ax1.errorbar(m["coef"], m["driver"], xerr=[m["coef"] - m["lo"], m["hi"] - m["coef"]],
                  fmt="none", ecolor=FG, capsize=4, lw=1.2)
     ax1.axvline(0, color=FG, lw=1)
-    ax1.set_xlabel("Yards of separation gained through the break per +1 SD\n(95% CI, players resampled)")
-    ax1.set_title("What buys separation at the break?", loc="left", fontsize=13, fontweight="bold")
+    ax1.set_xlabel("Association with separation gained through the break\n(yards per +1 SD, 95% CI, players resampled)")
+    ax1.set_title("What is associated with separation at the break?", loc="left", fontsize=13, fontweight="bold")
     ax1.grid(axis="y", visible=False)
 
     q = q.copy()
@@ -194,10 +194,10 @@ def fig_separation(model, q):
     ax2.set_xticks(range(4), ["Slowest 25%", "Q2", "Q3", "Fastest 25%"])
     ax2.set_xlabel("Entry speed into the break (quartile within corner type)")
     ax2.set_ylabel("Separation gained through the break (yd)\nadjusted for starting separation")
-    ax2.set_title("Arrive faster, leave more open", loc="left", fontsize=13, fontweight="bold")
+    ax2.set_title("Faster entries gain more separation", loc="left", fontsize=13, fontweight="bold")
     ax2.legend(fontsize=9)
     fig.tight_layout()
-    fig.savefig(FIG / "02_what_buys_separation.png", dpi=140)
+    fig.savefig(FIG / "02_separation_drivers.png", dpi=140)
     plt.close(fig)
 
 
@@ -294,7 +294,7 @@ def fig_payoff(q):
         ax.set_xlabel("Across the field (yd)")
         ax.legend(fontsize=9, loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=3)
     axes[0].set_ylabel("Downfield (yd)")
-    fig.suptitle("Separation payoff on a typical slant/post: receiver vs the defender nearest him at entry",
+    fig.suptitle("Separation through the break on a typical sweeper corner: receiver vs the defender nearest him at entry",
                  fontsize=13, fontweight="bold", x=0.01, ha="left")
     fig.tight_layout()
     fig.savefig(FIG / "05_separation_payoff.png", dpi=140)
@@ -361,15 +361,16 @@ def main():
         print(players[(players.pos == pos) & (players.corners >= 20)][cols[:1] + cols[4:13]].head(8).round(2).to_string(index=False))
 
     free = gg[gg["sep"] > 1.5]
-    block = (np.arange(len(free)) // 300) % 2          # interleaved halves of each player's frames
-    area = free.groupby(["nflId", block]).apply(
+    half = np.where(free["week"] <= 4, "weeks_1_4", "weeks_5_8")   # same split as the corner metrics
+    area = free.groupby(["nflId", half]).apply(
         lambda d: envelope_area(envelope_radii(d["a_lat_g"].to_numpy(), d["a_lon_g"].to_numpy()))).unstack()
-    size = free.groupby(["nflId", block]).size().unstack()
-    env_r = area[(size >= 1500).all(axis=1)].corr().iloc[0, 1]
+    size = free.groupby(["nflId", half]).size().unstack()
+    enough = (size >= 1500).all(axis=1)                 # about 50 routes in each half
+    env_r, env_n = area[enough].corr().iloc[0, 1], int(enough.sum())
     wr = players[players.pos == "WR"]
     env_vs_open = wr["envelope_area"].corr(wr["sep_at_release"], method="spearman")
     env_vs_tgt = wr["envelope_area"].corr(wr["targets"] / wr["routes"], method="spearman")
-    print(f"envelope split-half r={env_r:.2f} | WR envelope vs separation at release rho={env_vs_open:.2f}, "
+    print(f"envelope weeks 1-4 vs 5-8 r={env_r:.2f} (n={env_n}) | WR envelope vs separation at release rho={env_vs_open:.2f}, "
           f"vs target rate rho={env_vs_tgt:.2f} (n={len(wr)})")
     kupp = players[players.player == "Cooper Kupp"].iloc[0]
     print(f"Kupp: envelope pct {kupp.envelope_area_pct:.0f}, targets {kupp.targets:.0f}, routes {kupp.routes}")
@@ -378,6 +379,7 @@ def main():
                 "model_same_defender": model_same.round(3).to_dict("records"),
                 "speed_retained_vs_sep_gain": {k: round(float(v), 2) for k, v in speed_kept.items()},
                 "envelope_reliability": round(float(env_r), 2),
+                "envelope_reliability_n": env_n,
                 "wr_envelope_vs_separation": round(float(env_vs_open), 2),
                 "wr_envelope_vs_target_rate": round(float(env_vs_tgt), 2),
                 "reliability": {k: round(float(r), 2) for k, (r, n) in reliability.items()},

@@ -34,6 +34,8 @@ def process_game(path):
         r, g = rt.analyze_play(play, routes[play_id], cover.get(play_id, set()))
         for row in r:
             row.update(gameId=game_id, playId=play_id)
+        for frames in g:
+            frames["gameId"] = game_id
         rows += r
         gg += g
     return pd.DataFrame(rows), (pd.concat(gg) if gg else pd.DataFrame())
@@ -80,8 +82,9 @@ def main():
                         for t in routes["trace"]])
     np.save(OUT / "traces.npy", traces)                      # row i <-> routes row i
     routes.drop(columns=["trace", "playDescription"]).to_parquet(OUT / "routes.parquet")
-    gg = gg[gg["nflId"].isin(routes["nflId"].unique())]
-    gg.astype({"nflId": "int32", "s": "float32", "sep": "float32",
+    gg = gg[gg["nflId"].isin(routes["nflId"].unique())].copy()
+    gg["week"] = gg.pop("gameId").map(games.set_index("gameId")["week"])   # for week-split reliability
+    gg.astype({"nflId": "int32", "week": "int8", "s": "float32", "sep": "float32",
                "a_lon_g": "float32", "a_lat_g": "float32"}).to_parquet(OUT / "gg.parquet")
 
     print(f"routes: {len(routes):,}  with corner: {routes.has_corner.mean():.1%}  "

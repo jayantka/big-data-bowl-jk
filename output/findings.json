@@ -56,7 +56,8 @@
     "90-degree (in/out/dig)": -0.19,
     "Hairpin (curl/comeback)": -0.0
   },
-  "envelope_reliability": 0.84,
+  "envelope_reliability": 0.8,
+  "envelope_reliability_n": 125,
   "wr_envelope_vs_separation": -0.09,
   "wr_envelope_vs_target_rate": 0.05,
   "reliability": {
