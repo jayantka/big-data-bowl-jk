@@ -14,6 +14,8 @@
   h1 { margin:0; font-size:28px; letter-spacing:.5px; }
   h2 { font-size:16px; margin:0 0 8px; }
   .sub { color:var(--muted); margin:4px 0 20px; }
+  .eyebrow { color:var(--a); font-size:12px; letter-spacing:1.5px; margin:0 0 6px; }
+  .lead { color:var(--muted); font-size:13px; margin:-2px 0 8px; }
   .tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:12px; margin-bottom:12px; }
   .tile, .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
   .tile b { display:block; font-size:26px; font-variant-numeric:tabular-nums; }
@@ -39,33 +41,37 @@
 </head>
 <body>
 <main>
-  <h1>ROUTE TELEMETRY</h1>
-  <p class="sub">Every route break analysed like a Formula 1 corner: entry speed, braking, apex, exit. NFL Next Gen Stats tracking, 2021 Weeks 1–8, WR / TE / RB.</p>
+  <p class="eyebrow">ROUTE TELEMETRY · 2021 NFL DATA</p>
+  <h1>What Makes NFL Receivers Get Open?</h1>
+  <p class="sub">We analyzed 5,470 route breaks to see how players use speed and changes of direction to create space from defenders.</p>
 
   <div class="tiles" id="tiles"></div>
   <p class="takeaway" id="takeaway"></p>
 
+  <p class="note" style="margin:0 0 12px">Just like racing teams compare how two cars take the same turn, we compare how two NFL receivers run similar routes.</p>
+
   <div class="controls">
     <label class="la">Receiver A<select id="selA"></select></label>
-    <label class="lb">Receiver B (the ghost car)<select id="selB"></select></label>
-    <label>Corner type<select id="selT"></select></label>
+    <label class="lb">Receiver B<select id="selB"></select></label>
+    <label>Type of route break<select id="selT"></select></label>
   </div>
 
-  <p class="note" style="margin:0 0 12px">Corner types are geometry-based route families defined by turn angle (35–70°, 70–115°, 115°+), not charted route names. The route names in brackets are what each family typically contains.</p>
+  <p class="note" style="margin:0 0 12px">Types of route break are based on the angle of the turn (35–70°, 70–115°, 115°+), not on charted route names. The route names in brackets are what each type typically contains.</p>
 
   <div class="grid">
-    <div class="panel"><h2>Ghost-car speed trace</h2><div id="ghost" class="plot"></div><div id="ghostNote" class="warn"></div></div>
-    <div class="panel"><h2>G-G diagram (performance envelope)</h2><div id="gg" class="plot"></div></div>
+    <div class="panel"><h2>Compare Two Receivers</h2><p class="lead">See how two players' speeds change as they approach, make and leave a similar turn.</p><div id="ghost" class="plot"></div><div id="ghostNote" class="warn"></div></div>
+    <div class="panel"><h2>How Players Move and Change Direction</h2><p class="lead">See how hard a receiver slows down, speeds up and moves sideways when making a turn.</p><div id="gg" class="plot"></div><p class="note">Each dot is a tenth of a second of a route. The outline marks the outer edge of what he does (95th percentile); a bigger outline means more movement ability.</p></div>
   </div>
 
   <div class="panel scroll" style="margin-bottom:12px">
-    <h2>Telemetry sheet</h2>
+    <h2>Player Numbers Side by Side</h2>
     <table id="sheet"></table>
-    <p class="note">Bars show percentile among players at the same position with at least 100 routes. Corner stats use only clean corners: entry at 4.5+ yd/s, at least 1 s after the snap, nearest defender 0.7–8 yd away.</p>
+    <p class="note">Bars show percentile among players at the same position with at least 100 routes. Turn numbers use only clean turns: at least 4.5 yd/s before the turn, at least 1 s after the snap, nearest defender 0.7–8 yd away.</p>
   </div>
 
   <div class="panel">
-    <h2>What is associated with separation at the break?</h2>
+    <h2>Extra Space Created From the Defender</h2>
+    <p class="lead">Which movement traits are most closely linked to a receiver getting open?</p>
     <div id="model" class="plot" style="height:300px"></div>
     <p class="note" id="modelNote"></p>
   </div>
@@ -85,12 +91,12 @@ const fmt = (v, d=2) => v == null ? "–" : v.toFixed(d);
 const m = Object.fromEntries(F.model.map(r => [r.driver, r]));
 const es = m["Entry speed"], bf = m["Braking force"];
 $("tiles").innerHTML = [
-  [`+${es.coef.toFixed(2)} yd`, `more separation through the break associated with +1 SD of entry speed (95% CI ${es.lo.toFixed(2)} to ${es.hi.toFixed(2)})`],
-  [`${Math.abs(bf.coef).toFixed(2)} yd`, `association with braking force (95% CI ${bf.lo.toFixed(2)} to ${bf.hi.toFixed(2)}): none measurable`],
-  [`r = ${F.envelope_reliability.toFixed(2)}`, `stability of a receiver's G-G envelope between Weeks 1–4 and Weeks 5–8 (${F.envelope_reliability_n} players)`],
-  [`${F.n_corners.toLocaleString()}`, `clean corners analysed, from ${F.n_routes.toLocaleString()} routes`],
+  [`+${es.coef.toFixed(2)} yd`, `extra space created from the defender, linked to each step up in speed before the turn (+1 standard deviation, about 1 yd/s; 95% CI ${es.lo.toFixed(2)} to ${es.hi.toFixed(2)})`],
+  [`${Math.abs(bf.coef).toFixed(2)} yd`, `link between harder braking and extra space (95% CI ${bf.lo.toFixed(2)} to ${bf.hi.toFixed(2)}): none measurable`],
+  [`r = ${F.envelope_reliability.toFixed(2)}`, `how stable a receiver's movement ability is between Weeks 1–4 and Weeks 5–8 (${F.envelope_reliability_n} players)`],
+  [`${F.n_corners.toLocaleString()}`, `clean route breaks analysed, from ${F.n_routes.toLocaleString()} routes`],
 ].map(([b, s]) => `<div class="tile"><b>${b}</b><span>${s}</span></div>`).join("");
-$("takeaway").innerHTML = "<b>Separation is won on the straight, not in the corner.</b> Faster entry speed into the break is associated with more separation gained through it. Harder braking, higher cornering g and quicker exit acceleration show no positive association once entry speed is accounted for. This is observational, not proof of cause.";
+$("takeaway").innerHTML = "<b>Speed going into a turn is linked to more space from the defender than speed kept through it.</b> This is probably because the defender has to respect the chance he keeps running deep. Braking harder, turning harder and speeding up faster after the turn are not linked to extra space once speed before the turn is accounted for. This is observational, not proof of cause.";
 
 // selectors
 const ids = Object.keys(P).sort((a, b) => P[a].name.localeCompare(P[b].name));
@@ -103,13 +109,15 @@ function fill(sel, chosen) {
   sel.value = ids.find(i => P[i].name === chosen) || ids[0];
 }
 fill($("selA"), "Tyreek Hill"); fill($("selB"), "Jakobi Meyers");
-DATA.types.forEach(t => $("selT").appendChild(new Option(t, t)));
+const TYPE_LABEL = { "Sweeper (slant/post)":"Gentle turn (slants, posts)", "90-degree (in/out/dig)":"Square turn (ins, outs, digs)",
+                     "Hairpin (curl/comeback)":"Sharp turn back (curls, comebacks)" };
+DATA.types.forEach(t => $("selT").appendChild(new Option(TYPE_LABEL[t] || t, t)));
 
 function ghost(a, b, type) {
   const ta = a.traces[type], tb = b.traces[type], traces = [];
   traces.push({ x:T, y:DATA.league[type], name:"League average", mode:"lines", line:{color:MUTED, dash:"dash", width:1.5} });
-  if (ta) traces.push({ x:T, y:ta.v, name:`${a.name} (${ta.n} corners)`, mode:"lines", line:{color:CA, width:3} });
-  if (tb) traces.push({ x:T, y:tb.v, name:`${b.name} (${tb.n} corners)`, mode:"lines", line:{color:CB, width:3} });
+  if (ta) traces.push({ x:T, y:ta.v, name:`${a.name} (${ta.n} turns)`, mode:"lines", line:{color:CA, width:3} });
+  if (tb) traces.push({ x:T, y:tb.v, name:`${b.name} (${tb.n} turns)`, mode:"lines", line:{color:CB, width:3} });
   if (ta && tb) {
     let run = 0;
     const gap = T.map((_, i) => (ta.v[i] == null || tb.v[i] == null) ? null : (run += (ta.v[i] - tb.v[i]) / 10));
@@ -117,9 +125,9 @@ function ghost(a, b, type) {
                   fillcolor:"rgba(232,234,237,.18)", showlegend:false });
   }
   const missing = [[a, ta], [b, tb]].filter(([, t]) => !t).map(([p]) => p.name);
-  $("ghostNote").textContent = missing.length ? `Fewer than 5 clean corners of this type for ${missing.join(" and ")}.` : "";
+  $("ghostNote").textContent = missing.length ? `Fewer than 5 clean turns of this type for ${missing.join(" and ")}.` : "";
   Plotly.react("ghost", traces, { ...base,
-    xaxis:{ ...axis, title:"Seconds from apex of the cut", anchor:"y2" },
+    xaxis:{ ...axis, title:"Seconds from the slowest point of the turn", anchor:"y2" },
     yaxis:{ ...axis, title:"Speed (yd/s)", domain:[0.34, 1] },
     yaxis2:{ ...axis, title:"A's lead (yd)", domain:[0, 0.24] },
     shapes:[{ type:"line", x0:0, x1:0, yref:"paper", y0:0, y1:1, line:{color:FG, dash:"dot", width:1} }],
@@ -128,23 +136,23 @@ function ghost(a, b, type) {
 
 function gg(a, b) {
   const pts = (p, c) => ({ x:p.gg[0], y:p.gg[1], mode:"markers", marker:{color:c, size:3, opacity:.35}, showlegend:false, hoverinfo:"skip" });
-  const env = (p, c) => ({ x:p.env[0], y:p.env[1], mode:"lines", line:{color:c, width:2.5}, name:`${p.name} · ${fmt(p.stats.envelope_area)} g²` });
+  const env = (p, c) => ({ x:p.env[0], y:p.env[1], mode:"lines", line:{color:c, width:2.5}, name:`${p.name} · movement ability ${fmt(p.stats.envelope_area)} g²` });
   Plotly.react("gg", [pts(a, CA), pts(b, CB), env(a, CA), env(b, CB)], { ...base,
-    xaxis:{ ...axis, title:"Lateral g (cutting)", range:[-0.95, 0.95] },
-    yaxis:{ ...axis, title:"Braking  ←  longitudinal g  →  accelerating", range:[-0.85, 1.05], scaleanchor:"x" },
+    xaxis:{ ...axis, title:"Moving sideways (estimated g)", range:[-0.95, 0.95] },
+    yaxis:{ ...axis, title:"Slowing down  ←  estimated g  →  speeding up", range:[-0.85, 1.05], scaleanchor:"x" },
   }, cfg);
 }
 
 const ROWS = [
-  ["Entry speed into the break (yd/s)", "entry_speed", "entry_speed_pct"],
-  ["Entry speed vs expected for depth (yd/s)", "entry_speed_oe", "entry_speed_oe_pct"],
-  ["Apex (minimum) speed (yd/s)", "apex_speed", null],
-  ["Peak braking (g)", "braking_g", "braking_g_pct"],
-  ["Peak cornering (g)", "cornering_g", "cornering_g_pct"],
-  ["Exit acceleration (yd/s²)", "exit_accel", "exit_accel_pct"],
-  ["G-G envelope area (g²)", "envelope_area", "envelope_area_pct"],
+  ["Speed before the turn (yd/s)", "entry_speed", "entry_speed_pct"],
+  ["Speed before the turn vs expected for depth (yd/s)", "entry_speed_oe", "entry_speed_oe_pct"],
+  ["Lowest speed during the turn (yd/s)", "apex_speed", null],
+  ["Hardest braking (estimated g)", "braking_g", "braking_g_pct"],
+  ["Hardest sideways force (estimated g)", "cornering_g", "cornering_g_pct"],
+  ["Acceleration after the turn (yd/s²)", "exit_accel", "exit_accel_pct"],
+  ["Movement ability (area, g²)", "envelope_area", "envelope_area_pct"],
   ["Top speed, 99th pct (yd/s)", "top_speed", "top_speed_pct"],
-  ["Separation at release, all routes (yd)", "sep_at_release", null],
+  ["Space from the defender at the throw, all routes (yd)", "sep_at_release", null],
 ];
 function sheet(a, b) {
   const cell = (p, k, pk, c) => {
@@ -154,17 +162,19 @@ function sheet(a, b) {
   };
   $("sheet").innerHTML =
     `<tr><th></th><th style="color:${CA}">${a.name} · ${a.pos} · ${a.weight} lb</th><th style="color:${CB}">${b.name} · ${b.pos} · ${b.weight} lb</th></tr>` +
-    `<tr><td>Routes run / clean corners</td><td>${a.routes} / ${a.corners}</td><td>${b.routes} / ${b.corners}</td></tr>` +
+    `<tr><td>Routes run / clean turns</td><td>${a.routes} / ${a.corners}</td><td>${b.routes} / ${b.corners}</td></tr>` +
     ROWS.map(([label, k, pk]) => `<tr><td>${label}</td>${cell(a, k, pk, CA)}${cell(b, k, pk, CB)}</tr>`).join("");
 }
 
 function model() {
   const r = [...F.model].reverse();
-  Plotly.newPlot("model", [{ type:"bar", orientation:"h", y:r.map(d => d.driver), x:r.map(d => d.coef),
+  const TRAIT = { "Entry speed":"Speed before the turn", "Braking force":"Braking force",
+                  "Cornering (lateral) g":"Sideways force in the turn", "Exit acceleration":"Acceleration after the turn" };
+  Plotly.newPlot("model", [{ type:"bar", orientation:"h", y:r.map(d => TRAIT[d.driver] || d.driver), x:r.map(d => d.coef),
     marker:{ color:r.map(d => d.lo > 0 ? CA : d.hi < 0 ? "#dc0000" : MUTED) },
     error_x:{ type:"data", symmetric:false, array:r.map(d => d.hi - d.coef), arrayminus:r.map(d => d.coef - d.lo), color:FG, thickness:1.2 } }],
-    { ...base, margin:{l:170, r:15, t:10, b:50}, xaxis:{ ...axis, title:"Association with separation gained through the break (yd per +1 SD, 95% CI)" }, yaxis:{ ...axis } }, cfg);
-  $("modelNote").textContent = "Linear model on " + F.n_corners.toLocaleString() + " clean corners, controlling for starting separation, turn angle, depth and man/zone coverage. Intervals resample players. Measured against one fixed defender (nearest at entry) the entry-speed association is +" + F.model_same_defender[0].coef.toFixed(2) + " yd. Separation is measured from 0.5 s before to 0.5 s after the apex; tracking ends shortly after the throw, so catch-point separation is not observed.";
+    { ...base, margin:{l:200, r:15, t:10, b:50}, xaxis:{ ...axis, title:"Extra space created from the defender (yd per +1 standard deviation, 95% CI)" }, yaxis:{ ...axis } }, cfg);
+  $("modelNote").textContent = "Linear model on " + F.n_corners.toLocaleString() + " clean route breaks, controlling for starting space, turn angle, depth and man/zone coverage. Intervals resample players. Measured against one fixed defender (the nearest one before the turn), speed before the turn is linked to +" + F.model_same_defender[0].coef.toFixed(2) + " yd of extra space. Space is measured from 0.5 s before to 0.5 s after the slowest point of the turn; tracking ends shortly after the throw, so space at the catch is not observed.";
 }
 
 function render() {
