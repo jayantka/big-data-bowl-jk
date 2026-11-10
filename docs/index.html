@@ -20,6 +20,7 @@
   .tile, .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
   .tile b { display:block; font-size:26px; font-variant-numeric:tabular-nums; }
   .tile span { color:var(--muted); font-size:13px; }
+  .tile small { display:block; color:var(--muted); font-size:11px; opacity:.8; margin-top:6px; }
   .takeaway { border-left:3px solid var(--a); padding:8px 14px; margin:0 0 20px; background:var(--panel); border-radius:0 8px 8px 0; }
   .controls { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
   .controls label { display:flex; flex-direction:column; font-size:12px; color:var(--muted); gap:4px; flex:1 1 200px; }
@@ -60,7 +61,7 @@
 
   <div class="grid">
     <div class="panel"><h2>Compare Two Receivers</h2><p class="lead">See how two players' speeds change as they approach, make and leave a similar turn.</p><div id="ghost" class="plot"></div><div id="ghostNote" class="warn"></div></div>
-    <div class="panel"><h2>How Players Move and Change Direction</h2><p class="lead">See how hard a receiver slows down, speeds up and moves sideways when making a turn.</p><div id="gg" class="plot"></div><p class="note">Each dot is a tenth of a second of a route. The outline marks the outer edge of what he does (95th percentile); a bigger outline means more movement ability.</p></div>
+    <div class="panel"><h2>How Players Move and Change Direction</h2><p class="lead">See how hard a receiver slows down, speeds up and moves sideways when making a turn.</p><div id="gg" class="plot"></div><p class="note">Each dot represents a moment of movement. The larger the outline, the wider the range of movements the player demonstrated. A larger outline does not automatically mean a better route runner: among wide receivers it was not linked to getting open.</p></div>
   </div>
 
   <div class="panel scroll" style="margin-bottom:12px">
@@ -71,7 +72,8 @@
 
   <div class="panel">
     <h2>Extra Space Created From the Defender</h2>
-    <p class="lead">Which movement traits are most closely linked to a receiver getting open?</p>
+    <p class="lead">Which movement traits are most closely linked to a receiver getting open? Of the movement traits we measured, speed before the turn showed the clearest positive relationship with getting open.</p>
+    <p class="note" style="margin:0 0 4px">Teal bar: linked to more space. Red bars: linked to less space. Grey: no clear link. Bars show extra space created from the defender for a one-step (one standard deviation) increase in each trait.</p>
     <div id="model" class="plot" style="height:300px"></div>
     <p class="note" id="modelNote"></p>
   </div>
@@ -91,12 +93,12 @@ const fmt = (v, d=2) => v == null ? "–" : v.toFixed(d);
 const m = Object.fromEntries(F.model.map(r => [r.driver, r]));
 const es = m["Entry speed"], bf = m["Braking force"];
 $("tiles").innerHTML = [
-  [`+${es.coef.toFixed(2)} yd`, `extra space created from the defender, linked to each step up in speed before the turn (+1 standard deviation, about 1 yd/s; 95% CI ${es.lo.toFixed(2)} to ${es.hi.toFixed(2)})`],
+  [`+${es.coef.toFixed(2)} yd`, `Receivers entering a turn about 1 yard/second faster tended to gain ${es.coef.toFixed(2)} more yards of space.`, `95% CI ${es.lo.toFixed(2)} to ${es.hi.toFixed(2)}, per +1 standard deviation of speed before the turn`],
   [`${Math.abs(bf.coef).toFixed(2)} yd`, `link between harder braking and extra space (95% CI ${bf.lo.toFixed(2)} to ${bf.hi.toFixed(2)}): none measurable`],
   [`r = ${F.envelope_reliability.toFixed(2)}`, `how stable a receiver's movement ability is between Weeks 1–4 and Weeks 5–8 (${F.envelope_reliability_n} players)`],
   [`${F.n_corners.toLocaleString()}`, `clean route breaks analysed, from ${F.n_routes.toLocaleString()} routes`],
-].map(([b, s]) => `<div class="tile"><b>${b}</b><span>${s}</span></div>`).join("");
-$("takeaway").innerHTML = "<b>Speed going into a turn is linked to more space from the defender than speed kept through it.</b> This is probably because the defender has to respect the chance he keeps running deep. Braking harder, turning harder and speeding up faster after the turn are not linked to extra space once speed before the turn is accounted for. This is observational, not proof of cause.";
+].map(([b, s, fine]) => `<div class="tile"><b>${b}</b><span>${s}</span>${fine ? `<small>${fine}</small>` : ""}</div>`).join("");
+$("takeaway").innerHTML = "<b>Speed going into a turn is linked to more space from the defender than speed kept through it.</b> This is probably because the defender has to respect the chance he keeps running deep. Once speed before the turn is accounted for, braking harder shows no link with extra space, and turning harder and speeding up faster after the turn are linked to slightly less space in this model. This is observational, not proof of cause.";
 
 // selectors
 const ids = Object.keys(P).sort((a, b) => P[a].name.localeCompare(P[b].name));
@@ -173,7 +175,7 @@ function model() {
   Plotly.newPlot("model", [{ type:"bar", orientation:"h", y:r.map(d => TRAIT[d.driver] || d.driver), x:r.map(d => d.coef),
     marker:{ color:r.map(d => d.lo > 0 ? CA : d.hi < 0 ? "#dc0000" : MUTED) },
     error_x:{ type:"data", symmetric:false, array:r.map(d => d.hi - d.coef), arrayminus:r.map(d => d.coef - d.lo), color:FG, thickness:1.2 } }],
-    { ...base, margin:{l:200, r:15, t:10, b:50}, xaxis:{ ...axis, title:"Extra space created from the defender (yd per +1 standard deviation, 95% CI)" }, yaxis:{ ...axis } }, cfg);
+    { ...base, margin:{l:200, r:15, t:10, b:50}, xaxis:{ ...axis, title:"Extra space (yd per +1 SD, 95% CI)" }, yaxis:{ ...axis } }, cfg);
   $("modelNote").textContent = "Linear model on " + F.n_corners.toLocaleString() + " clean route breaks, controlling for starting space, turn angle, depth and man/zone coverage. Intervals resample players. Measured against one fixed defender (the nearest one before the turn), speed before the turn is linked to +" + F.model_same_defender[0].coef.toFixed(2) + " yd of extra space. Space is measured from 0.5 s before to 0.5 s after the slowest point of the turn; tracking ends shortly after the throw, so space at the catch is not observed.";
 }
 
