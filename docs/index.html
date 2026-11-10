@@ -61,7 +61,10 @@
   /* route-break guide */
   .routeguide { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 10px; }
   .rg { display:flex; align-items:center; gap:10px; flex:1 1 220px; padding:8px 12px; border:1px solid var(--line); border-radius:10px;
-        background:var(--panel); color:var(--muted); font-size:13px; transition:border-color .15s, color .15s; }
+        background:var(--panel); color:var(--muted); font:inherit; font-size:13px; text-align:left; cursor:pointer;
+        transition:border-color .15s, color .15s; }
+  .rg:hover { border-color:var(--muted); color:var(--fg); }
+  .rg:focus-visible { outline:2px solid var(--a); outline-offset:2px; }
   .rg svg { flex:none; width:46px; height:40px; }
   .rg path { fill:none; stroke:currentColor; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
   .rg circle { fill:currentColor; }
@@ -110,13 +113,13 @@
     </div>
   </div>
 
-  <div class="routeguide" aria-label="Route break shapes">
-    <div class="rg"><svg viewBox="0 0 46 40" aria-hidden="true"><circle cx="12" cy="36" r="3"/><path d="M12 36 L12 20 L34 5"/><path d="M26 5 L34 5 L32 13"/></svg><span>Gentle turn (slants, posts)</span></div>
-    <div class="rg"><svg viewBox="0 0 46 40" aria-hidden="true"><circle cx="10" cy="36" r="3"/><path d="M10 36 L10 12 L38 12"/><path d="M32 6 L38 12 L32 18"/></svg><span>Square turn (ins, outs, digs)</span></div>
-    <div class="rg"><svg viewBox="0 0 46 40" aria-hidden="true"><circle cx="14" cy="36" r="3"/><path d="M14 36 L14 6 L30 24"/><path d="M30 15 L30 24 L21 23"/></svg><span>Sharp turn back (curls, comebacks)</span></div>
+  <div class="routeguide" role="group" aria-label="Choose a type of route break">
+    <button type="button" class="rg"><svg viewBox="0 0 46 40" aria-hidden="true"><circle cx="12" cy="36" r="3"/><path d="M12 36 L12 20 L34 5"/><path d="M26 5 L34 5 L32 13"/></svg><span>Gentle turn (slants, posts)</span></button>
+    <button type="button" class="rg"><svg viewBox="0 0 46 40" aria-hidden="true"><circle cx="10" cy="36" r="3"/><path d="M10 36 L10 12 L38 12"/><path d="M32 6 L38 12 L32 18"/></svg><span>Square turn (ins, outs, digs)</span></button>
+    <button type="button" class="rg"><svg viewBox="0 0 46 40" aria-hidden="true"><circle cx="14" cy="36" r="3"/><path d="M14 36 L14 6 L30 24"/><path d="M30 15 L30 24 L21 23"/></svg><span>Sharp turn back (curls, comebacks)</span></button>
   </div>
 
-  <p class="note" style="margin:0 0 12px">Types of route break are based on the angle of the turn (35–70°, 70–115°, 115°+), not on charted route names. The route names in brackets are what each type typically contains.</p>
+  <p class="note" style="margin:0 0 12px">Types of route break are based on the angle of the turn (35–70°, 70–115°, 115°+), not on charted route names. The route names in brackets are what each type typically contains. Choosing a type changes the Compare Two Receivers chart; the movement chart and the table use all of a player's routes.</p>
 
   <div class="grid">
     <div class="panel"><p class="kicker">01 Compare</p><h2>Compare Two Receivers</h2><p class="lead">See how two players' speeds change as they approach, make and leave a similar turn.</p><div id="ghost" class="plot"></div><div id="ghostNote" class="warn"></div></div>
@@ -253,9 +256,10 @@ function model() {
 function render() {
   const a = P[$("selA").value], b = P[$("selB").value], t = $("selT").value;
   ghost(a, b, t); gg(a, b); sheet(a, b);
-  document.querySelectorAll(".rg").forEach((el, i) => el.classList.toggle("on", DATA.types[i] === t));
+  document.querySelectorAll(".rg").forEach((el, i) => { el.classList.toggle("on", DATA.types[i] === t); el.setAttribute("aria-pressed", DATA.types[i] === t); });
 }
 ["selA", "selB", "selT"].forEach(id => $(id).addEventListener("change", render));
+document.querySelectorAll(".rg").forEach((el, i) => el.addEventListener("click", () => { $("selT").value = DATA.types[i]; render(); }));
 model(); render();
 </script>
 </body>
